@@ -25,7 +25,6 @@ import android.content.ComponentName;
 import android.content.res.Configuration;
 import android.content.res.Configuration.Orientation;
 import android.metrics.LogMaker;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 
@@ -72,7 +71,6 @@ import javax.inject.Provider;
  */
 public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewController<T>
         implements Dumpable, TunerService.Tunable {
-
     private static final String TAG = "QSPanelControllerBase";
     protected final QSHost mHost;
     private final QSCustomizerController mQsCustomizerController;
@@ -176,7 +174,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
             DumpManager dumpManager,
             SplitShadeStateController splitShadeStateController,
             Provider<QSLongPressEffect> longPressEffectProvider,
-            TunerService tunerService
+	    TunerService tunerService
     ) {
         super(view);
         mHost = host;
@@ -191,7 +189,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         mShouldUseSplitNotificationShade =
                 mSplitShadeStateController.shouldUseSplitNotificationShade(getResources());
         mLongPressEffectProvider = longPressEffectProvider;
-        mTunerService = tunerService;
+    	mTunerService = tunerService;
     }
 
     @Override
@@ -251,16 +249,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
         }
         switchTileLayout(true);
 
-        mTunerService.addTunable(this, QSPanel.QS_TILE_VERTICAL_LAYOUT);
-        mTunerService.addTunable(this, QSPanel.QS_TILE_LABEL_HIDE);
         mTunerService.addTunable(this, QSPanel.QS_TILE_LABEL_SIZE);
-        mTunerService.addTunable(this, QSPanel.QS_LAYOUT_COLUMNS);
-        mTunerService.addTunable(this, QSPanel.QS_LAYOUT_COLUMNS_LANDSCAPE);
-        mTunerService.addTunable(this, QSPanel.QS_LAYOUT_ROWS);
-        mTunerService.addTunable(this, QSPanel.QS_LAYOUT_ROWS_LANDSCAPE);
-        mTunerService.addTunable(this, QSPanel.QQS_LAYOUT_ROWS);
-        mTunerService.addTunable(this, QSPanel.QQS_LAYOUT_ROWS_LANDSCAPE);
-
         mDumpManager.registerDumpable(mView.getDumpableTag(), this);
     }
 
@@ -276,8 +265,6 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
 
     @Override
     protected void onViewDetached() {
-        mTunerService.removeTunable(this);
-
         mQSLogger.logOnViewDetached(mLastOrientation, mView.getDumpableTag());
         mView.removeOnConfigurationChangedListener(mOnConfigurationChangedListener);
 
@@ -494,8 +481,7 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
 
     private void setLayoutForMediaInScene() {
         boolean withMedia = shouldUseHorizontalInScene();
-        mView.needsDynamicRowsAndColumns();
-        mView.placeTileLayoutForScene(withMedia);
+        mView.setColumnRowLayout(withMedia);
     }
 
     /**
@@ -626,16 +612,8 @@ public abstract class QSPanelControllerBase<T extends QSPanel> extends ViewContr
     @Override
     public void onTuningChanged(String key, String newValue) {
         switch (key) {
-            case QSPanel.QS_TILE_VERTICAL_LAYOUT:
-            case QSPanel.QS_TILE_LABEL_HIDE:
             case QSPanel.QS_TILE_LABEL_SIZE:
-            case QSPanel.QS_LAYOUT_COLUMNS:
-            case QSPanel.QS_LAYOUT_COLUMNS_LANDSCAPE:
-            case QSPanel.QS_LAYOUT_ROWS:
-            case QSPanel.QS_LAYOUT_ROWS_LANDSCAPE:
-            case QSPanel.QQS_LAYOUT_ROWS:
-            case QSPanel.QQS_LAYOUT_ROWS_LANDSCAPE:
-                if (mView.getTileLayout() != null) {
+               if (mView.getTileLayout() != null) {
                     mView.getTileLayout().updateSettings();
                     mForceUpdate = true;
                     getContext().getMainExecutor().execute(() -> {

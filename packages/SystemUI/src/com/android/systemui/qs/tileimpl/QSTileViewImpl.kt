@@ -71,8 +71,8 @@ import com.android.systemui.plugins.qs.QSIconView
 import com.android.systemui.plugins.qs.QSTile
 import com.android.systemui.plugins.qs.QSTile.AdapterState
 import com.android.systemui.plugins.qs.QSTileView
-import com.android.systemui.qs.TileUtils
 import com.android.systemui.qs.logging.QSLogger
+import com.android.systemui.qs.TileUtils
 import com.android.systemui.qs.tileimpl.QSIconViewImpl.QS_ANIM_LENGTH
 import com.android.systemui.res.R
 import java.util.Objects
@@ -285,9 +285,8 @@ constructor(
             )
         }
         setId(generateViewId())
-        vertical = TileUtils.getQSTileVerticalLayout(context)
-        labelHide = TileUtils.getQSTileLabelHide(context)
-        forceHideCheveron = vertical || labelHide
+        orientation = LinearLayout.HORIZONTAL
+        gravity = Gravity.CENTER_VERTICAL or Gravity.START
         importantForAccessibility = IMPORTANT_FOR_ACCESSIBILITY_YES
         clipChildren = false
         clipToPadding = false
@@ -323,10 +322,8 @@ constructor(
             setPaddingRelative(startPadding, padding, padding, padding)
             addView(icon, LayoutParams(iconSize, iconSize))
         }
-
         createAndAddLabels()
         createAndAddSideView()
-        updateResources()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration?) {
@@ -381,10 +378,10 @@ constructor(
             gravity = Gravity.CENTER_HORIZONTAL or Gravity.CENTER_VERTICAL
 
         val padding = resources.getDimensionPixelSize(R.dimen.qs_tile_padding)
-        val startPadding = if (vertical) padding else resources.getDimensionPixelSize(R.dimen.qs_tile_start_padding)
+        val startPadding = resources.getDimensionPixelSize(R.dimen.qs_tile_start_padding)
         setPaddingRelative(startPadding, padding, padding, padding)
 
-        val labelMargin = if (vertical) 0 else resources.getDimensionPixelSize(R.dimen.qs_label_container_margin)
+        val labelMargin = resources.getDimensionPixelSize(R.dimen.qs_label_container_margin)
         (labelContainer.layoutParams as MarginLayoutParams).apply { marginStart = labelMargin }
 
         (sideView.layoutParams as MarginLayoutParams).apply { marginStart = labelMargin }
@@ -553,8 +550,7 @@ constructor(
         // is too short.
         val constrainedSquishiness = constrainSquishiness(squishinessFraction)
         bottom = top + (actualHeight * constrainedSquishiness).toInt()
-        scrollY = (actualHeight - height) / if (vertical) 7 else 2
-        label.alpha = if (!vertical) 1.0f else Math.pow(squishinessFraction.toDouble(), 7.0).toFloat()
+        scrollY = (actualHeight - height) / 2
         maybeUpdateLongPressEffectHeight(actualHeight.toFloat())
     }
 
@@ -1026,7 +1022,7 @@ constructor(
             customDrawableView.setImageDrawable(state.sideViewCustomDrawable)
             customDrawableView.visibility = VISIBLE
             chevronView.visibility = GONE
-        } else if ((state !is AdapterState || state.forceExpandIcon) && !forceHideCheveron) {
+        } else if (state !is AdapterState || state.forceExpandIcon) {
             customDrawableView.setImageDrawable(null)
             customDrawableView.visibility = GONE
             chevronView.visibility = VISIBLE
